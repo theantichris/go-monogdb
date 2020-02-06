@@ -10,9 +10,25 @@ import (
 	"github.com/joho/godotenv"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type podcast struct {
+	ID     primitive.ObjectID `bson:"_id,omitempty"`
+	Title  string             `bson:"title,omitempty"`
+	Author string             `bson:"author,omitempty"`
+	Tags   []string           `bson:"tags,omitempty"`
+}
+
+type episode struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Podcast     primitive.ObjectID `bson:"podcast,omitempty"`
+	Title       string             `bson:"title,omitempty"`
+	Description string             `bson:"description,omitempty"`
+	Duration    int32              `bson:"duration,omitempty"`
+}
 
 func main() {
 	err := godotenv.Load()
@@ -31,12 +47,20 @@ func main() {
 	defer client.Disconnect(ctx)
 
 	database := client.Database("podcasts_app")
-
-	podcastsCollection := database.Collection("podcasts")
-	readAll(ctx, podcastsCollection)
-
+	// podcastsCollection := database.Collection("podcasts")
 	episodesCollection := database.Collection("episodes")
-	readAll(ctx, episodesCollection)
+
+	var episodeResults []episode
+	cursor, err := episodesCollection.Find(ctx, bson.M{"duration": bson.D{{"$gt", 25}}})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err = cursor.All(ctx, &episodeResults); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(episodeResults)
 }
 
 func initClient(uri string) *mongo.Client {
