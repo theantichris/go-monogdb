@@ -21,7 +21,6 @@ func main() {
 	}
 
 	client := initClient(os.Getenv("ATLAS_URI"))
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
 	err = client.Connect(ctx)
