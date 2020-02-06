@@ -1,2 +1,3 @@
-# go-monogdb
-Connecting to MongoDB Atlas with Go.
+# podcasts
+
+Application for tracking podcast information using Go and MongoDB Atlas.
