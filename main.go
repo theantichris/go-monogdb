@@ -20,11 +20,7 @@ func main() {
 		log.Fatal("Error loading .env file.")
 	}
 
-	databaseURI := os.Getenv("ATLAS_URI")
-	client, err := mongo.NewClient(options.Client().ApplyURI(databaseURI))
-	if err != nil {
-		log.Fatal(err)
-	}
+	client := initClient(os.Getenv("ATLAS_URI"))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
@@ -36,10 +32,21 @@ func main() {
 	defer client.Disconnect(ctx)
 
 	database := client.Database("podcasts_app")
-	// podcastsCollection := database.Collection("podcasts")
-	episodesCollection := database.Collection("episodes")
 
+	podcastsCollection := database.Collection("podcasts")
+	readAll(ctx, podcastsCollection)
+
+	episodesCollection := database.Collection("episodes")
 	readAll(ctx, episodesCollection)
+}
+
+func initClient(uri string) *mongo.Client {
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return client
 }
 
 func insertData(ctx context.Context, podcastsCollection, episodesCollection *mongo.Collection) {
@@ -79,13 +86,6 @@ func readAll(ctx context.Context, collection *mongo.Collection) {
 		log.Fatal(err)
 	}
 	defer cursor.Close(ctx)
-
-	// var results []bson.M
-	// if err = cursor.All(ctx, &results); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Println(results)
 
 	for cursor.Next(ctx) {
 		var result bson.M
