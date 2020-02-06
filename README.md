@@ -7,5 +7,5 @@ Application for tracking podcast information using Go and MongoDB Atlas.
 If the application is unable to connect to Atlas add the following line to the top of `/etc/resolv.conf`:
 
 ```shell
-nameserver 8.8.838
+nameserver 8.8.8.8
 ```
