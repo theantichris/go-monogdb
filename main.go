@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 func main() {
@@ -36,14 +35,36 @@ func main() {
 	}
 	defer client.Disconnect(ctx)
 
-	err = client.Ping(ctx, readpref.Primary())
+	database := client.Database("podcasts_app")
+	podcastsCollection := database.Collection("podcasts")
+	episodesCollection := database.Collection("episodes")
+
+	podcastResult, err := podcastsCollection.InsertOne(ctx, bson.D{
+		{Key: "title", Value: "The Polygot Developer Podcst"},
+		{Key: "author", Value: "Nic Raboy"},
+		{Key: "tags", Value: bson.A{"development", "programming", "coding"}},
+	})
 	if err != nil {
-		log.Fatalf("could not ping database server: %v:", err)
+		log.Fatal(err)
 	}
 
-	databases, err := client.ListDatabaseNames(ctx, bson.M{})
+	episodeResult, err := episodesCollection.InsertMany(ctx, []interface{}{
+		bson.D{
+			{Key: "podcast", Value: podcastResult.InsertedID},
+			{Key: "title", Value: "GraphQL for API Development"},
+			{Key: "description", Value: "Learn about GraphQL from the go-creator of GraphQL, Lee Byron."},
+			{Key: "duration", Value: 25},
+		},
+		bson.D{
+			{Key: "podcast", Value: podcastResult.InsertedID},
+			{Key: "title", Value: "Progressive Web Application Development"},
+			{Key: "description", Value: "Learn about PWA development with Tara Manicsic."},
+			{Key: "duration", Value: 32},
+		},
+	})
 	if err != nil {
-		log.Fatalf("could not get database names: %v:", err)
+		log.Fatal(err)
 	}
-	fmt.Println(databases)
+
+	fmt.Printf("Inserted %v documents into episode collection!\n", len(episodeResult.InsertedIDs))
 }
