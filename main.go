@@ -36,9 +36,13 @@ func main() {
 	defer client.Disconnect(ctx)
 
 	database := client.Database("podcasts_app")
-	podcastsCollection := database.Collection("podcasts")
+	// podcastsCollection := database.Collection("podcasts")
 	episodesCollection := database.Collection("episodes")
 
+	readAll(ctx, episodesCollection)
+}
+
+func insertData(ctx context.Context, podcastsCollection, episodesCollection *mongo.Collection) {
 	podcastResult, err := podcastsCollection.InsertOne(ctx, bson.D{
 		{Key: "title", Value: "The Polygot Developer Podcst"},
 		{Key: "author", Value: "Nic Raboy"},
@@ -67,4 +71,28 @@ func main() {
 	}
 
 	fmt.Printf("Inserted %v documents into episode collection!\n", len(episodeResult.InsertedIDs))
+}
+
+func readAll(ctx context.Context, collection *mongo.Collection) {
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cursor.Close(ctx)
+
+	// var results []bson.M
+	// if err = cursor.All(ctx, &results); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// fmt.Println(results)
+
+	for cursor.Next(ctx) {
+		var result bson.M
+		if err = cursor.Decode(&result); err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(result)
+	}
 }
